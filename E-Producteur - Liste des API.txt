@@ -1,0 +1,59 @@
+Liste des API e-producteur
+
+-------------------PRODUCTEUR--------------------------------------------
+
+POST => http://localhost:8080/api/v1/addproducteur : Ajout d'un producteur =>     { "nom": "Ouallo","prenoms": "Jean Charles","date": "1992-05-04",
+        "password": "Ouallo","repassword": "Ouallo","username": "Ouallo","contact": "0774859665","produit": 1}
+
+GET => http://localhost:8080/api/v1/listproducteur : liste des producteurs
+
+PUT => http://localhost:8080/api/v1/updateproducteur : Mettre à jour les producteur  => { "id" : "1","nom": "Ouallo","prenoms": "Jean Charles","date": "1992-05-04",
+        "password": "Ouallo","repassword": "Ouallo","username": "Ouallo","contact": "0774859665","produit": 1}
+
+DELETE => http://localhost:8080/api/v1/deleteproducteur : Suppression d'une categories => {"id" : "7"}
+
+-------------------CATEGORIES---------------------------------------------
+
+POST => http://localhost:8080/api/v1/addcategorie  :  Ajout de nouvelle categorie => {"categorie" : "Hevea"}
+
+GET => http://localhost:8080/api/v1/listcategories  : La liste des categories 
+
+PUT => http://localhost:8080/api/v1/updatecategories : Mettre à jour les categories => {"id" : "2", "libelle" : "Coton"}
+
+DELETE => http://localhost:8080/api/v1/deletecategories : Suppression d'une categories =>  {"id" : "24"}
+
+-------------------PRODUITS---------------------------------------------
+
+POST => http://localhost:8080/api/v1/addproduit : Ajout d'un produit => {"libelle" : "Hevea", "categorie" : "2", "prix" : "2000"}
+
+GET => http://localhost:8080/api/v1/listproduit : La liste des produits
+
+PUT => http://localhost:8080/api/v1/updateproduit : Mettre à jour les produits => {"id" : "4" , "libelle" : "Noix de cajoux" , "categorie" : "1" , "prix" : "900"}
+
+DELETE => http://localhost:8080/api/v1/deleteproduit : Suppression d'un produit => {"id" : "4"}
+
+-------------------PRODUITS---------------------------------------------
+
+POST => http://localhost:8080/api/v1/addadmin : Ajout d'un admin =>     {"nom": "Dibi","prenoms": "Ahou Georgina","date": "1999-02-12","password": "Gina",
+        "repassword": "Gina","username": "Gina","contact": "0125365874"}
+
+GET = > http://localhost:8080/api/v1/listadmin => La liste des produits
+
+PUT => http://localhost:8080/api/v1/updateadmin : Mettre à jour les admin => { "id" : "1","nom": "Dibi","prenoms": "Ahou Georgina","date": "1999-02-12",
+        "password": "Gina","repassword": "Gina","username": "Gina","contact": "0774859665"}
+
+DELETE => http://localhost:8080/api/v1/deleteadmin : Suppression d'un admin => {"id" : "2"}
+
+-------------------ACHATS---------------------------------------------
+
+POST => http://localhost:8080/api/v1/addachat : Ajout d'un achat => {"idprod": "1","idproduit": "1","idadmin": "1","quantite": "13","prixproduit": "900"}
+
+GET => http://localhost:8080/api/v1/listachat : Liste des achats
+
+PUT => http://localhost:8080/api/v1/updateachat : Mettre à jour les achats => {"id" : "1", "idprod": "1","idproduit": "2","idadmin": "1","quantite": "62","prixproduit": "900"}
+
+DELETE => http://localhost:8080/api/v1/deleteachat : Suppression d'un achat => {"id" : "3"}
+
+
+
+

@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const mysql = require ("mysql");
 const bodyParser = require('body-parser');
+const cors = require('cors');
 
 //Connexion a la base de données 
 const connection = mysql.createConnection({
@@ -24,6 +25,7 @@ const versionApi = '/api/v1';
 app.use(bodyParser.urlencoded({extended:false}));
 
 app.use(bodyParser.json());
+app.use(cors);
 
 //function de verification de chaque champs
 function notnull(value) {
@@ -157,8 +159,8 @@ app.delete(`${versionApi}/deleteproducteur`, (req, res) => {
     // Exécution de la requête SQL
     connection.query(sql, [id], (err, result) => {
         if (err) {
-            console.error('Erreur lors de la suppression de la catégorie : ' + err.stack);
-            res.status(500).json({ message: "Erreur lors de la suppression de la catégorie." });
+            console.error('Erreur lors de la suppression du producteur : ' + err.stack);
+            res.status(500).json({ message: "Erreur lors de la suppression du producteur." });
             return;
         }
         console.log("Catégorie supprimée avec succès.");
@@ -287,8 +289,7 @@ app.post(`${versionApi}/addproduit`, (req, res)=>{
         res.status(400)
         res.json({Erreur : "Veuillez remplir tous les champs"});
     }
-
-})
+});
 
 //Liste des produits
 app.get(`${versionApi}/listproduit`, (req, res) => {
@@ -320,7 +321,7 @@ app.put(`${versionApi}/updateproduit`, (req, res) => {
                 // Exécution de la requête SQL
                 connection.query(sql, [libelle, categorie, prix, id], (err, result) => {
                     if (err) {
-                        console.error('Erreur lors de la mise à jour de la catégorie : ' + err.stack);
+                        console.error('Erreur lors de la mise à jour du produit : ' + err.stack);
                         res.status(500).json({ Erreur: "Erreur lors de la modification de la Produit." });
                         return;
                     }
@@ -337,7 +338,7 @@ app.put(`${versionApi}/updateproduit`, (req, res) => {
     }
 });
 
-//Suppression d'une categorie
+//Suppression d'un produit
 app.delete(`${versionApi}/deleteproduit`, (req, res) => {
     const id = req.body.id; // Récupérer l'ID du produit à supprimer
 
@@ -348,7 +349,7 @@ app.delete(`${versionApi}/deleteproduit`, (req, res) => {
     connection.query(sql, [id], (err, result) => {
         if (err) {
             console.error('Erreur lors de la suppression du produit : ' + err.stack);
-            res.status(500).json({ message: "Erreur lors de la suppression de la catégorie." });
+            res.status(500).json({ message: "Erreur lors de la suppression du produit." });
             return;
         }
         console.log("produit supprimée avec succès.");
@@ -357,7 +358,7 @@ app.delete(`${versionApi}/deleteproduit`, (req, res) => {
     });
 });
 
-//                                          API ADMIN    
+//                                          API ADMIN
 // -------------------------------- ******************************** ----------------------------------------------//
 
 //Ajout d'un administrateur
@@ -384,7 +385,7 @@ app.post(`${versionApi}/addadmin`, (req, res)=>{
     // Vérification des champs non nuls
     if (notnull(nom) && notnull(prenoms) && notnull(date_naissance) && notnull(password) &&
         notnull(repassword) && notnull(username) && notnull(contact)) {
-        //Verification que les deux mot de passe sont identique    
+        //Verification que les deux mot de passe sont identique
         const requete = "SELECT * FROM admin WHERE usernameAdmin =?"
         connection.query(requete, [username] , (err, rows,fields)=>{
             console.log("Select des admin : "+ rows);
@@ -411,7 +412,7 @@ app.post(`${versionApi}/addadmin`, (req, res)=>{
     } else {
         // Au moins un champ est nul
         res.status(400).json({Erreur : "Veuillez remplir tous les champs"});
-    }    
+    }
 });
 
 // Affichage de tous les admin
@@ -437,7 +438,7 @@ app.put(`${versionApi}/updateadmin`, (req, res) => {
     // Vérifier que les champs ne sont pas vide
     if (notnull(id) && notnull(nom) && notnull(prenoms) && notnull(date_naissance) && notnull(password) &&
         notnull(repassword) && notnull(username) && notnull(contact)) {
-        //Verification que les deux mot de passe sont identique    
+        //Verification que les deux mot de passe sont identique
         const requete = "SELECT * FROM admin WHERE idAdmin != ? AND usernameAdmin =?"
         connection.query(requete, [id,username] , (err, rows,fields)=>{
             console.log("Select des admins : "+ rows);
@@ -456,19 +457,133 @@ app.put(`${versionApi}/updateadmin`, (req, res) => {
                         console.log("💖💖Requete de l'ajout terminer")
                         } )
                 }else{
-                    res.status(400).json({Erreur : "Les deux mot de passe ne sont pas identique"})
+                    res.status(400).json({Erreur : "Les deux mot de passe ne sont pas identique"});
                 }
             }
-        })
+        });
     } else {
         // Au moins un champ est nul
         res.status(400).json({Erreur : "Veuillez remplir tous les champs"});
-    }    
-
+    }
 });
 
-//                                          API ACHAT    
+//Suppression d'un admin
+app.delete(`${versionApi}/deleteadmin`, (req, res) => {
+    const id = req.body.id; // Récupérer l'ID de la catégorie à supprimer
+
+    // Requête SQL pour supprimer la catégorie
+    const sql = `DELETE FROM admin WHERE idAdmin = ?`;
+
+    // Exécution de la requête SQL
+    connection.query(sql, [id], (err, result) => {
+        if (err) {
+            console.error('Erreur lors de la suppression de l\' admin  : ' + err.stack);
+            res.status(500).json({ message: "Erreur lors de la suppression de l\'admin." });
+            return;
+        }
+        console.log("Admin supprimée avec succès.");
+        res.status(200)
+        res.json({ Sucess: "Admin supprimée avec succès." });
+    });
+});
+
+//                                          API ACHAT
 // -------------------------------- ******************************** ----------------------------------------------//
 
+//Ajout d'achat
+app.post(`${versionApi}/addachat`, (req, res)=>{
+    console.log("Route ajout d' achat");
+    const idprod = req.body.idprod;
+    const idproduit = req.body.idproduit;
+    const idadmin = req.body.idadmin;
+    const quantite = req.body.quantite;
+    const prixproduit = req.body.prixproduit;
+
+        //defission de la date actuelle
+        const dateActuelle = new Date();
+        // Obtient l'année, le mois, le jour, l'heure, les minutes, les secondes et les millisecondes actuels
+        const annee = dateActuelle.getFullYear();
+        const mois = dateActuelle.getMonth() + 1; // Les mois commencent à partir de 0
+        const jour = dateActuelle.getDate();
+        const date = annee + "-" + mois + "-" + jour;
+    if(notnull(idprod) && notnull(idproduit) && notnull(idadmin) && notnull(quantite) && notnull(prixproduit)){
+        const montant = prixproduit * quantite ;
+        const sql = "INSERT INTO achat(idProd, idProduit, idAdmin, dateAchat, quantiteAchat, montantAchat) VALUES (?,?,?,?,?,?)";
+        connection.query(sql, [idprod, idproduit, idadmin, date, quantite, montant], (err, rows, fields) => {
+            console.log("Entree dans la requete ajouts d'achat");
+            if(err) throw err;
+            const successMessage = "Enregistrement effectué avec succès";
+            res.status(200);
+            res.json({Success: successMessage});
+            console.log("💖💖Requete de l'ajout terminer");
+        });
+    }else{
+        res.status(400)
+        res.json({Erreur : "Veuillez remplir tous les champs"});
+    }
+});
+
+//Liste des achats
+app.get(`${versionApi}/listachat`, (req, res) => {
+    console.log("Route d'ajout d'un achat");
+    const sql = "SELECT * FROM achat" ; 
+    connection.query(sql, (err, rows, fields) => {
+        if(err) throw err;
+        res.status(200).json(rows) ;
+        console.log("resultat de la liste : " + rows);
+    });
+});
+
+//Modification d'un achat
+app.put(`${versionApi}/updateachat`, (req, res) => {
+    const id = req.body.id ;
+    const idprod = req.body.idprod;
+    const idproduit = req.body.idproduit;
+    const idadmin = req.body.idadmin;
+    const quantite = req.body.quantite;
+    const prixproduit = req.body.prixproduit;
+
+    // Vérifier que les champs ne sont pas vide
+    if(notnull(id) && notnull(idprod) && notnull(idproduit) && notnull(idadmin) && notnull(quantite) && notnull(prixproduit)){
+        const montant = quantite * prixproduit ;
+        const sql = "UPDATE achat SET idProd = ?, idProduit = ?, idAdmin = ?, quantiteAchat = ?, montantAchat = ? WHERE idAchat = ?";
+        connection.query(sql,[idprod, idproduit, idadmin, quantite, montant, id], (err, rows, fields) => {
+        console.log("Entree dans la requete modification de l'achat")
+        if(err) throw err;
+            const successMessage = "Modification effectué avec succès ";
+            res.status(200);
+            res.json({Success: successMessage});
+            console.log("💖💖Requete de modification terminer");
+        });
+    } else {
+        // Au moins un champ est nul
+        res.status(400).json({Erreur : "Veuillez remplir tous les champs"});
+    }
+});
+
+//Suppression d'un achat
+app.delete(`${versionApi}/deleteachat`, (req, res) => {
+    const id = req.body.id; // Récupérer l'ID de la catégorie à supprimer
+
+    // Requête SQL pour supprimer la catégorie
+    const sql = `DELETE FROM achat WHERE idAchat = ?`;
+
+    // Exécution de la requête SQL
+    connection.query(sql, [id], (err, result) => {
+        if (err) {
+            console.error('Erreur lors de la suppression de l\' achat  : ' + err.stack);
+            res.status(500).json({ message: "Erreur lors de la suppression de l'achat." });
+            return;
+        }
+        console.log("Achat supprimée avec succès.");
+        res.status(200)
+        res.json({ Sucess: "Achat supprimée avec succès." });
+    });
+});
+
+//Recherche par produit
+app.get(`${versionApi}/searchproduit`, (req,res) => {
+    
+});
 
 app.listen(8080, () => console.log('Listening on port 8080'));
