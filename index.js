@@ -4,7 +4,7 @@ const mysql = require ("mysql");
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
-//Connexion a la base de données 
+//Connexion a la base de données
 const connection = mysql.createConnection({
     host: "localhost",
     user: "root",
@@ -17,22 +17,46 @@ connection.connect((err) =>{
         console.error("Erreur de connexion : "+err.stack)
         return;
     }
-    console.log("Connexion reussie à la bdd ! ")
 });
-
 const versionApi = '/api/v1';
-
+app.use(cors());
 app.use(bodyParser.urlencoded({extended:false}));
 
 app.use(bodyParser.json());
-app.use(cors);
+
 
 //function de verification de chaque champs
 function notnull(value) {
+    console.log("Connexion reussie à la bdd ! 5")
     return (value !== null && value !== undefined && value !== '');
 }
 
+console.log("Connexion reussie à la bdd ! 6")
 
+//                                          API AUTHENTIFICATION
+// -------------------------------- ******************************** ----------------------------------------------//
+
+app.post(`${versionApi}/authentification`, (req, res) =>{
+    const username = req.body.username ;
+    const password = req.body.password;
+    const requete = "SELECT * from admin WHERE usernameAdmin =? AND pwdAdmin = ?"
+    connection.query(requete, [username, password], (err, rows, fields) =>{
+        if(err) throw err ;
+        console.log(rows.length);
+        if(rows.length === 1){
+        res.status(200).json({
+            token : "bienrealiser",
+            donnee : rows
+        });
+        console.log(rows);
+        }
+        else{
+            res.status(400).json({
+                Erreur : "Nom d'utilisateur ou mot de pass incorrect"
+            })
+        }
+    } )
+})
 
 //                                          API PRODUCTEUR    
 // -------------------------------- ******************************** ----------------------------------------------//
@@ -41,11 +65,40 @@ function notnull(value) {
 // Affichage de tous les producteur
 app.get(`${versionApi}/listproducteur`, (req, res) => {
     connection.query("SELECT * FROM producteur", (err, rows, fields) => {
-        if(err) throw err;
-        res.json(rows)
-        console.log("Les données sont : ", rows)
-    })
-})
+        console.log("Connexion réussie à la base de données !");
+        if (err) {
+            throw err;
+        }
+        
+        let __prod = rows;
+        let promises = [];
+
+        for (let i = 0; i < rows.length; i++) {
+            promises.push(new Promise((resolve, reject) => {
+                let requete = "SELECT * FROM produit WHERE idProduit = ?";
+                connection.query(requete, [__prod[i].idProduit], (err, result, fields) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        __prod[i].nomProduit = result[0].libelleProduit;
+                        resolve();
+                    }
+                });
+            }));
+        }
+
+        Promise.all(promises)
+            .then(() => {
+                res.status(200).json(__prod);
+            })
+            .catch((err) => {
+                console.error("Une erreur s'est produite : ", err);
+                res.status(500).json({ error: "Une erreur s'est produite lors de la récupération des données" });
+            });
+    });
+});
+
+
 
 //Ajout d'un producteur
 app.post(`${versionApi}/addproducteur`, (req, res)=>{
@@ -53,9 +106,7 @@ app.post(`${versionApi}/addproducteur`, (req, res)=>{
     const nom = req.body.nom;
     const prenoms = req.body.prenoms;
     const date_naissance = req.body.date;
-    const password = req.body.password;
-    const repassword = req.body.repassword;
-    const username = req.body.username;
+    const sexe = req.body.sexe;
     const contact = req.body.contact;
     const produit = req.body.produit;
 
@@ -68,21 +119,11 @@ app.post(`${versionApi}/addproducteur`, (req, res)=>{
     const jour = dateActuelle.getDate();
     const date = annee + "-" + mois + "-" + jour;
 
-    console.log("Etape de verifications" + nom + " : " + prenoms + " : " +date_naissance + " : " + password +  + " : " + repassword + " : " + username + " : " +contact + " : " +produit);
+    console.log("Etape de verifications" + nom + " : " + prenoms + " : " +date_naissance + " : " +contact + " : " +produit);
     // Vérification des champs non nuls
-    if (notnull(nom) && notnull(prenoms) && notnull(date_naissance) && notnull(password) &&
-        notnull(repassword) && notnull(username) && notnull(contact) && notnull(produit)) {
-        //Verification que les deux mot de passe sont identique    
-        const requete = "SELECT * FROM producteur WHERE usernameProd =?"
-        connection.query(requete, [username] , (err, rows,fields)=>{
-            console.log("Select des producteur : "+ rows);
-            if(rows.length > 0) {
-                console.log("Verification du nombre de ligne");
-                res.status(400).send({Erreur : "Erreur : le nom d'utilisateur existe deja"});
-            }else{
-                if(repassword === password){
-                    const sql = "INSERT INTO producteur(`nomProd`, `prenomsProd`, `date_naissProd`, `pwdProd`, `usernameProd`, `date_CreaProd`, `contactProd`, `idProduit`) VALUES (?,?,?,?,?,?,?,?)";
-                    connection.query(sql,[nom, prenoms, date_naissance, password, username, date, contact, produit], (err, rows, fields) => {
+    if (notnull(nom) && notnull(prenoms) && notnull(date_naissance)  && notnull(contact) && notnull(produit) && notnull(sexe)) {
+                    const sql = "INSERT INTO producteur(`nomProd`, `prenomsProd`, `sexeProd`, `date_naissProd`, `date_CreaProd`, `contactProd`, `idProduit`) VALUES (?,?,?,?,?,?,?)";
+                    connection.query(sql,[nom, prenoms, sexe, date_naissance, date, contact, produit], (err, rows, fields) => {
                         console.log("Entree dans la requete ajouts de producteur")
                         if(err) throw err;
                         const successMessage = "Enregistrement effectué avec succès ";
@@ -90,12 +131,6 @@ app.post(`${versionApi}/addproducteur`, (req, res)=>{
                         res.json({Success: successMessage});
                         console.log("💖💖Requete de l'ajout terminer")
                         } )
-                }else{
-                    res.status(400).json({Erreur : "Les deux mot de passe ne sont pas identique"})
-                }
-            }
-        })
-
     } else {
         // Au moins un champ est nul
         res.status(400).json({Erreur : "Veuillez remplir tous les champs"});
@@ -109,26 +144,17 @@ app.put(`${versionApi}/updateproducteur`, (req, res) => {
     const nom = req.body.nom;
     const prenoms = req.body.prenoms;
     const date_naissance = req.body.date;
-    const password = req.body.password;
-    const repassword = req.body.repassword;
-    const username = req.body.username;
+    const sexe = req.body.sexe;
     const contact = req.body.contact;
     const produit = req.body.produit;
 
     // Vérifier que les champs ne sont pas vide
-    if (notnull(id) && notnull(nom) && notnull(prenoms) && notnull(date_naissance) && notnull(password) &&
-        notnull(repassword) && notnull(username) && notnull(contact) && notnull(produit)) {
+    if (notnull(id) && notnull(nom) && notnull(prenoms) && notnull(date_naissance) && notnull(contact) && notnull(produit)) {
         //Verification que les deux mot de passe sont identique    
-        const requete = "SELECT * FROM producteur WHERE idProd != ? AND usernameProd =?"
-        connection.query(requete, [id,username] , (err, rows,fields)=>{
-            console.log("Select des producteur : "+ rows);
-            if(rows.length > 0) {
-                console.log("Verification du nombre de ligne");
-                res.status(400).json({Erreur : "le nom d'utilisateur existe deja"});
-            }else{
-                if(repassword === password){
-                    const sql = "UPDATE producteur SET nomProd = ?, prenomsProd = ?, date_naissProd = ?, pwdProd = ?, usernameProd = ?, contactProd = ?, idProduit = ? WHERE idProd = ?";
-                    connection.query(sql,[nom, prenoms, date_naissance, password, username, contact, produit,id], (err, rows, fields) => {
+        const requete = "SELECT * FROM producteur WHERE idProd != ? "
+        connection.query(requete, [id] , (err, rows,fields)=>{
+                    const sql = "UPDATE producteur SET nomProd = ?, prenomsProd = ?, date_naissProd = ?, sexeProd = ?, contactProd = ?, idProduit = ? WHERE idProd = ?";
+                    connection.query(sql,[nom, prenoms, date_naissance, sexe, contact, produit,id], (err, rows, fields) => {
                         console.log("Entree dans la requete ajouts de producteur")
                         if(err) throw err;
                         const successMessage = "Modification effectué avec succès ";
@@ -136,10 +162,6 @@ app.put(`${versionApi}/updateproducteur`, (req, res) => {
                         res.json({Success: successMessage});
                         console.log("💖💖Requete de l'ajout terminer")
                         } )
-                }else{
-                    res.status(400).json({Erreur : "Les deux mot de passe ne sont pas identique"})
-                }
-            }
         })
     } else {
         // Au moins un champ est nul
@@ -150,7 +172,7 @@ app.put(`${versionApi}/updateproducteur`, (req, res) => {
 
 
 //Suppression d'un producteur
-app.delete(`${versionApi}/deleteproducteur`, (req, res) => {
+app.post(`${versionApi}/deleteproducteur`, (req, res) => {
     const id = req.body.id; // Récupérer l'ID de la catégorie à supprimer
 
     // Requête SQL pour supprimer la catégorie
@@ -176,7 +198,7 @@ app.delete(`${versionApi}/deleteproducteur`, (req, res) => {
 //Ajout de categorie
 app.post(`${versionApi}/addcategorie`, (req, res)=>{
     console.log("Route ajout de categorie");
-    const nom = req.body.categorie;
+    const nom = req.body.libelle;
     if(nom){
         connection.query("INSERT INTO categorieproduit(libelleCatProd) VALUES ('" + nom + "')", (err, rows, fields) => {
         console.log("Entree dans la requete ajouts de categorie")
@@ -197,7 +219,6 @@ app.get(`${versionApi}/listcategories`, (req, res) => {
     connection.query("SELECT * FROM categorieproduit", (err, rows, fields) => {
         if(err) throw err;
         res.json(rows);
-        console.log(rows.length);
     })
 })
 
@@ -238,7 +259,7 @@ app.put(`${versionApi}/updatecategories`, (req, res) => {
 
 
 //Suppression d'une categorie
-app.delete(`${versionApi}/deletecategories`, (req, res) => {
+app.post(`${versionApi}/deletecategories`, (req, res) => {
     const id = req.body.id; // Récupérer l'ID de la catégorie à supprimer
 
     // Requête SQL pour supprimer la catégorie
@@ -258,14 +279,14 @@ app.delete(`${versionApi}/deletecategories`, (req, res) => {
 });
 
 
-//                                          API PRODUIT    
+//                                          API PRODUIT
 // -------------------------------- ******************************** ----------------------------------------------//
 
 //Ajout de produit
 app.post(`${versionApi}/addproduit`, (req, res)=>{
     console.log("Route ajout de produit");
     const libelle = req.body.libelle;
-    const categorie = req.body.categorie;
+    const categorie = req.body.idcategorie;
     const prix = req.body.prix;
     if(notnull(libelle) && notnull(categorie) && notnull(prix)){
         const requete = "SELECT * FROM produit WHERE  libelleProduit =?" // Requete ppur voir si le libelle n'existe pas deja
@@ -294,18 +315,61 @@ app.post(`${versionApi}/addproduit`, (req, res)=>{
 //Liste des produits
 app.get(`${versionApi}/listproduit`, (req, res) => {
     connection.query("SELECT * FROM produit", (err, rows, fields) => {
+        console.log("Connexion réussie à la base de données !");
+        if (err) {
+            throw err;
+        }
+        
+        let __prod = rows;
+        let promises = [];
+
+        for (let i = 0; i < rows.length; i++) {
+            promises.push(new Promise((resolve, reject) => {
+                let requete = "SELECT * FROM categorieproduit WHERE idCatProd = ?";
+                connection.query(requete, [__prod[i].idCatProd], (err, result, fields) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        __prod[i].categorie = result[0].libelleCatProd;
+                        resolve();
+                    }
+                });
+            }));
+        }
+
+        Promise.all(promises)
+            .then(() => {
+                res.status(200).json(__prod);
+            })
+            .catch((err) => {
+                console.error("Une erreur s'est produite : ", err);
+                res.status(500).json({ error: "Une erreur s'est produite lors de la récupération des données" });
+            });
+    });
+});
+
+//filtrer le produit avec id
+app.post(`${versionApi}/filterproduit`, (req, res) => {
+    const id  = req.body.idProduit;
+    if(notnull(id)){
+        
+    requete = "SELECT * FROM produit WHERE idProduit = ?";
+    connection.query(requete, [id], (err, rows, fields) => {
         if(err) throw err;
         res.status(200);
         res.json(rows);
         console.log(rows.length);
-    })
+    })   
+    }else{
+        res.status(400).json({Erreur : "Veuillez remplir tous les champs"});
+    }
 })
 
 //modifier une un produit
 app.put(`${versionApi}/updateproduit`, (req, res) => {
     const id = req.body.id;
     const libelle = req.body.libelle;
-    const categorie = req.body.categorie;
+    const categorie = req.body.idcategorie;
     const prix = req.body.prix; // Récupérer le nouveau libellé de la catégorie depuis le corps de la requête JSON
 
     // Vérifier si le nouveau libellé est fourni dans les données JSON
@@ -339,7 +403,7 @@ app.put(`${versionApi}/updateproduit`, (req, res) => {
 });
 
 //Suppression d'un produit
-app.delete(`${versionApi}/deleteproduit`, (req, res) => {
+app.post(`${versionApi}/deleteproduit`, (req, res) => {
     const id = req.body.id; // Récupérer l'ID du produit à supprimer
 
     // Requête SQL pour supprimer le produit
@@ -366,6 +430,7 @@ app.post(`${versionApi}/addadmin`, (req, res)=>{
     console.log("Route ajout d' admin");
     const nom = req.body.nom;
     const prenoms = req.body.prenoms;
+    const sexe = req.body.sexe;
     const date_naissance = req.body.date;
     const password = req.body.password;
     const repassword = req.body.repassword;
@@ -391,16 +456,17 @@ app.post(`${versionApi}/addadmin`, (req, res)=>{
             console.log("Select des admin : "+ rows);
             if(rows.length > 0) {
                 console.log("Verification du nombre de ligne");
-                res.status(400).json({Erreur : "le nom d'utilisateur existe deja"});
+                res.status(404).json({Erreur : "le nom d'utilisateur existe deja"});    
             }else{
                 if(repassword === password){
-                    const sql = "INSERT INTO admin(`nomAdmin`, `prenomsAdmin`, `levelAdmin`, `date_naissAdmin`, `pwdAdmin`, `usernameAdmin`, `date_CreaAdmin`, `contactAdmin`) VALUES (?,?,?,?,?,?,?,?)";
-                    connection.query(sql,[nom, prenoms, levelAdmin, date_naissance, password, username, date, contact], (err, rows, fields) => {
+                    const sql = "INSERT INTO admin(`nomAdmin`, `prenomsAdmin`, `sexeAdmin`, `levelAdmin`, `date_naissAdmin`, `pwdAdmin`, `usernameAdmin`, `date_CreaAdmin`, `contactAdmin`) VALUES (?,?,?,?,?,?,?,?,?)";
+                    connection.query(sql,[nom, prenoms,sexe, levelAdmin, date_naissance, password, username, date, contact], (err, rows, fields) => {
                         console.log("Entree dans la requete ajouts d'un admin")
                         if(err) throw err;
                         const successMessage = "Enregistrement effectué avec succès ";
                         res.status(200);
-                        res.json({Success: successMessage});
+                        res.json({Success: successMessage,
+                                token : "Abdallah"});
                         console.log("💖💖Requete de l'ajout terminer")
                         } )
                 }else{
@@ -429,6 +495,7 @@ app.put(`${versionApi}/updateadmin`, (req, res) => {
     const id = req.body.id;
     const nom = req.body.nom;
     const prenoms = req.body.prenoms;
+    const sexe = req.body.sexe;
     const date_naissance = req.body.date;
     const password = req.body.password;
     const repassword = req.body.repassword;
@@ -447,8 +514,8 @@ app.put(`${versionApi}/updateadmin`, (req, res) => {
                 res.status(400).json({Erreur : "le nom d'utilisateur existe deja"});
             }else{
                 if(repassword === password){
-                    const sql = "UPDATE admin SET nomAdmin = ?, prenomsAdmin = ?, date_naissAdmin = ?, pwdAdmin = ?, usernameAdmin = ?, contactAdmin = ? WHERE idAdmin = ?";
-                    connection.query(sql,[nom, prenoms, date_naissance, password, username, contact, id], (err, rows, fields) => {
+                    const sql = "UPDATE admin SET nomAdmin = ?, prenomsAdmin = ?, sexeAdmin = ?, date_naissAdmin = ?, pwdAdmin = ?, usernameAdmin = ?, contactAdmin = ? WHERE idAdmin = ?";
+                    connection.query(sql,[nom, prenoms, sexe, date_naissance, password, username, contact, id], (err, rows, fields) => {
                         console.log("Entree dans la requete modification de admin")
                         if(err) throw err;
                         const successMessage = "Modification effectué avec succès ";
@@ -468,9 +535,9 @@ app.put(`${versionApi}/updateadmin`, (req, res) => {
 });
 
 //Suppression d'un admin
-app.delete(`${versionApi}/deleteadmin`, (req, res) => {
-    const id = req.body.id; // Récupérer l'ID de la catégorie à supprimer
-
+app.post(`${versionApi}/deleteadmin`, (req, res) => {
+    const id = req.body.id; // Récupérer l'ID de l'admin à supprimer
+    console.log(id);
     // Requête SQL pour supprimer la catégorie
     const sql = `DELETE FROM admin WHERE idAdmin = ?`;
 
@@ -483,7 +550,7 @@ app.delete(`${versionApi}/deleteadmin`, (req, res) => {
         }
         console.log("Admin supprimée avec succès.");
         res.status(200)
-        res.json({ Sucess: "Admin supprimée avec succès." });
+        res.json({ Sucess: "Admin supprimée avec succès." + id });
     });
 });
 
@@ -525,12 +592,51 @@ app.post(`${versionApi}/addachat`, (req, res)=>{
 
 //Liste des achats
 app.get(`${versionApi}/listachat`, (req, res) => {
-    console.log("Route d'ajout d'un achat");
-    const sql = "SELECT * FROM achat" ; 
-    connection.query(sql, (err, rows, fields) => {
-        if(err) throw err;
-        res.status(200).json(rows) ;
-        console.log("resultat de la liste : " + rows);
+    connection.query("SELECT * FROM achat", (err, rows, fields) => {
+        console.log("Connexion réussie à la base de données !");
+        if (err) {
+            throw err;
+        }
+        
+        let __prod = rows;
+        let promises = [];
+        let promisesProd = [];
+
+        for (let i = 0; i < rows.length; i++) {
+            promises.push(new Promise((resolve, reject) => {
+                let requete = "SELECT * FROM producteur WHERE idProd = ?";
+                connection.query(requete, [__prod[i].idProd], (err, result, fields) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        __prod[i].nomProducteur = result[0].nomProd+ ' ' + result[0].prenomsProd;
+                        resolve();
+                    }
+                });
+            }));
+
+            promisesProd.push(new Promise((resolve, reject) => {
+                let requete = "SELECT * FROM produit WHERE idProduit = ?";
+                connection.query(requete, [__prod[i].idProduit], (err, result, fields) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        __prod[i].nomProduit = result[0].libelleProduit;
+                        __prod[i].prixProduit = result[0].prixProduit;
+                        resolve();
+                    }
+                });
+            }));
+        }
+
+        Promise.all(promises, promisesProd)
+            .then(() => {
+                res.status(200).json(__prod);
+            })
+            .catch((err) => {
+                console.error("Une erreur s'est produite : ", err);
+                res.status(500).json({ error: "Une erreur s'est produite lors de la récupération des données" });
+            });
     });
 });
 
