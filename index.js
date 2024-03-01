@@ -3,6 +3,8 @@ const app = express();
 const mysql = require ("mysql");
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const {AdminDto} = require('./adminDto');
+const {ProducteurDto} = require('./producteurDto');
 
 //Connexion a la base de données
 const connection = mysql.createConnection({
@@ -66,35 +68,21 @@ app.post(`${versionApi}/authentification`, (req, res) =>{
 app.get(`${versionApi}/listproducteur`, (req, res) => {
     connection.query("SELECT * FROM producteur", (err, rows, fields) => {
         console.log("Connexion réussie à la base de données !");
-        if (err) {
-            throw err;
-        }
-        
-        let __prod = rows;
-        let promises = [];
-
-        for (let i = 0; i < rows.length; i++) {
-            promises.push(new Promise((resolve, reject) => {
-                let requete = "SELECT * FROM produit WHERE idProduit = ?";
-                connection.query(requete, [__prod[i].idProduit], (err, result, fields) => {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        __prod[i].nomProduit = result[0].libelleProduit;
-                        resolve();
-                    }
-                });
-            }));
-        }
-
-        Promise.all(promises)
-            .then(() => {
-                res.status(200).json(__prod);
-            })
-            .catch((err) => {
-                console.error("Une erreur s'est produite : ", err);
-                res.status(500).json({ error: "Une erreur s'est produite lors de la récupération des données" });
-            });
+        if(err) throw err;
+        const producteurDto = rows.map(producteur => {
+            return new ProducteurDto(
+                producteur.idProd,
+                producteur.nomProd,
+                producteur.prenomsProd,
+                producteur.date_naissProd,
+                producteur.sexeProd,
+                producteur.date_CreaProd,
+                producteur.contactProd,
+                producteur.idProduit
+            );
+        });
+        console.log(rows)
+        res.json(producteurDto);
     });
 });
 
@@ -134,7 +122,7 @@ app.post(`${versionApi}/addproducteur`, (req, res)=>{
     } else {
         // Au moins un champ est nul
         res.status(400).json({Erreur : "Veuillez remplir tous les champs"});
-    }    
+    }
 
 });
 
@@ -340,6 +328,7 @@ app.get(`${versionApi}/listproduit`, (req, res) => {
         Promise.all(promises)
             .then(() => {
                 res.status(200).json(__prod);
+                console.log(__prod[0].libelleProduit)
             })
             .catch((err) => {
                 console.error("Une erreur s'est produite : ", err);
@@ -485,7 +474,23 @@ app.post(`${versionApi}/addadmin`, (req, res)=>{
 app.get(`${versionApi}/listadmin`, (req, res) => {
     connection.query("SELECT * FROM admin", (err, rows, fields) => {
         if(err) throw err;
-        res.json(rows)
+                // Mapper les données de la base de données vers AdminDto
+                const adminDto = rows.map(admin => {
+                    return new AdminDto(
+                        admin.idAdmin,
+                        admin.nomAdmin,
+                        admin.prenomsAdmin,
+                        admin.sexeAdmin,
+                        admin.levelAdmin,
+                        admin.date_naissAdmin,
+                        admin.pwdAdmin,
+                        admin.usernameAdmin,
+                        admin.date_CreaAdmin,
+                        admin.contactAdmin
+                    );
+                });
+        
+                res.json(adminDto);
         console.log("Les données sont : ", rows)
     })
 })
@@ -618,7 +623,7 @@ app.get(`${versionApi}/listachat`, (req, res) => {
             promisesProd.push(new Promise((resolve, reject) => {
                 let requete = "SELECT * FROM produit WHERE idProduit = ?";
                 connection.query(requete, [__prod[i].idProduit], (err, result, fields) => {
-                    if (err) {
+                    if (err) {+65
                         reject(err);
                     } else {
                         __prod[i].nomProduit = result[0].libelleProduit;

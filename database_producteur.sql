@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : 127.0.0.1:3306
--- Généré le : mer. 28 fév. 2024 à 10:29
+-- Généré le : ven. 01 mars 2024 à 17:20
 -- Version du serveur : 8.0.31
--- Version de PHP : 8.2.0
+-- Version de PHP : 8.0.26
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -49,8 +49,7 @@ CREATE TABLE IF NOT EXISTS `achat` (
 INSERT INTO `achat` (`idAchat`, `idProd`, `idProduit`, `idAdmin`, `dateAchat`, `quantiteAchat`, `montantAchat`) VALUES
 (1, 1, 2, 1, '2024-01-29', 62, '55800.00'),
 (2, 1, 1, 1, '2024-01-29', 5, '5000.00'),
-(4, 1, 1, 1, '2024-02-05', 13, '11700.00'),
-(5, 1, 1, 1, '2024-02-05', 13, '11700.00');
+(4, 1, 1, 1, '2024-02-05', 13, '11700.00');
 
 -- --------------------------------------------------------
 
@@ -71,17 +70,16 @@ CREATE TABLE IF NOT EXISTS `admin` (
   `date_CreaAdmin` date DEFAULT NULL,
   `contactAdmin` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`idAdmin`)
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Déchargement des données de la table `admin`
 --
 
 INSERT INTO `admin` (`idAdmin`, `nomAdmin`, `prenomsAdmin`, `sexeAdmin`, `levelAdmin`, `date_naissAdmin`, `pwdAdmin`, `usernameAdmin`, `date_CreaAdmin`, `contactAdmin`) VALUES
-(1, 'Dibi', 'Ahou Georgina', 'F', 1, '1999-02-12', 'Gina', 'Gina', '2024-01-28', '0774859665'),
+(1, 'Dibi', 'Ahou Georgina', 'F', 1, '2000-10-27', 'Gina', 'Gina', '2024-01-28', '0774859665'),
 (12, 'Coulibaly', 'Adama', 'M', 0, '2000-05-17', 'Adama', 'Adama', '2024-02-15', '01203065'),
-(13, 'Benié', 'Levy', 'M', 0, '2000-07-18', 'Levy', 'Levy', '2024-02-16', '0779595588'),
-(14, 'Tanagueda', 'Cheick Abdallah', 'M', 1, '2000-10-27', 'Cheick', 'Cheick', '2024-02-24', '0779595588');
+(13, 'Benié', 'Levy', 'M', 0, '2000-07-18', 'Levy', 'Levy', '2024-02-16', '0779595588');
 
 -- --------------------------------------------------------
 
@@ -94,7 +92,7 @@ CREATE TABLE IF NOT EXISTS `categorieproduit` (
   `idCatProd` int NOT NULL AUTO_INCREMENT,
   `libelleCatProd` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`idCatProd`)
-) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Déchargement des données de la table `categorieproduit`
@@ -104,8 +102,7 @@ INSERT INTO `categorieproduit` (`idCatProd`, `libelleCatProd`) VALUES
 (1, 'Café-Cacao'),
 (2, 'Coton'),
 (32, 'Anacade'),
-(33, 'Tomate'),
-(34, 'Carotte');
+(33, 'Tomate');
 
 -- --------------------------------------------------------
 
@@ -134,7 +131,8 @@ CREATE TABLE IF NOT EXISTS `producteur` (
 INSERT INTO `producteur` (`idProd`, `nomProd`, `prenomsProd`, `date_naissProd`, `sexeProd`, `date_CreaProd`, `contactProd`, `idProduit`) VALUES
 (1, 'Tanagueda', 'Cheick Abdallah', '2002-04-22', 'M', '2024-01-26', '0708047879', 1),
 (8, 'Tanagueda', 'Cheick Abdallah', '2000-10-27', 'M', '2024-01-27', '0152963215', 2),
-(9, 'Yobokre', 'Corine', '1990-04-23', 'F', '2024-01-27', '0774859665', 3);
+(9, 'Yobokre', 'Corine', '1990-04-23', 'F', '2024-01-27', '0774859665', 3),
+(10, 'Ouallo', 'Jean Charles', '1992-05-04', 'M', '2024-01-29', '0774859665', 1);
 
 -- --------------------------------------------------------
 
@@ -150,7 +148,7 @@ CREATE TABLE IF NOT EXISTS `produit` (
   `prixProduit` decimal(10,2) DEFAULT NULL,
   PRIMARY KEY (`idProduit`),
   KEY `idCatProd` (`idCatProd`)
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Déchargement des données de la table `produit`
@@ -159,8 +157,9 @@ CREATE TABLE IF NOT EXISTS `produit` (
 INSERT INTO `produit` (`idProduit`, `libelleProduit`, `idCatProd`, `prixProduit`) VALUES
 (1, 'Café', 1, '1000.00'),
 (2, 'Cacao', 1, '900.00'),
-(3, 'Noix de cajoux', 2, '1000.00'),
-(14, 'Anacade', 32, '1000.00');
+(3, 'Noix de cajoux', 1, '1500.00'),
+(5, 'Anacade', 2, '2500.00'),
+(8, 'Palmier', 1, '1100.00');
 
 --
 -- Contraintes pour les tables déchargées
